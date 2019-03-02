@@ -1,5 +1,11 @@
 <style>
   @import './style/reset.css';
+  @import "./style/myMint.css";
+  #app{
+    flex: 1;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 </style>
 
 <template>

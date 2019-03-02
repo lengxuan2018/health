@@ -19,7 +19,7 @@
           </ul>
         </div>
         <div class="tips-btn">
-          <span class="tips-close" @click="hideTips">我知道了</span>
+          <span class="tips-close" v-tap @tap="hideTips">我知道了</span>
         </div>
       </div>
     </div>
@@ -27,44 +27,128 @@
     <div class="person-info">
       <div>
         <ul class="info-form">
+
           <li :class="{'input-choice':focus==='name'}">
-            <span class="name"></span><input placeholder="请填写姓名" @focus="focus='name'" @blur="focus=''"/>
+            <span class="form-icon name"></span><input class="form-input" v-model="formData.name" placeholder="请填写姓名" @focus="inputFocus('name')" @blur="inputBlur('name')" v-on:input="changeInput('name')"/>
           </li>
-          <li :class="{'input-choice':focus==='id-code'}">
-            <span class="id-code"></span><input placeholder="请填写身份证号" @focus="focus='id-code'" @blur="focus=''"/>
+          <li class="error" v-if="error.errname">
+            <span class="error-icon"></span><span class="error-txt">请填写正确的姓名</span>
           </li>
-          <li :class="{'input-choice':focus==='id-type'}">
-            <span class="id-type"></span><input placeholder="选择证件类型" @focus="focus='id-type'" @blur="focus=''"/>
+
+          <li :class="{'input-choice':focus==='idCode'}">
+            <span class="form-icon id-code"></span><input class="form-input" v-model="formData.idCode" placeholder="请填写身份证号" @focus="inputFocus('idCode')" @blur="inputBlur('idCode')" v-on:input="changeInput('idCode')"/>
           </li>
-          <li :class="{'input-choice':focus==='id-number'}">
-            <span class="id-number"></span><input placeholder="请填写证件号码" @focus="focus='id-number'" @blur="focus=''"/>
+          <li class="error" v-if="error.erridCode">
+            <span class="error-icon"></span><span class="error-txt">请填写正确的身份证号</span>
           </li>
+
+          <li :class="{'input-choice':focus==='idType'}">
+            <span class="form-icon id-type"></span><span class="form-input id-type-input" v-model="formData.idType" @touchend.stop.prevent="idTypeChoice"><i v-if="formData.idType">{{formData.idType}}</i><i v-else class="placeholder">选择证件类型</i><i class="id-type-icon"></i></span>
+            <!--<span class="form-icon id-type"></span><span class="form-input id-type-input" v-model="formData.idType" @focus="inputFocus('idType')" @blur="inputBlur('idType')" v-on:input="changeInput('idType')"><i v-if="formData.idType">{{formData.idType}}</i><i v-else class="placeholder">选择证件类型</i><i class="id-type-icon"></i></span>-->
+          </li>
+          <li class="error" v-if="error.erridType">
+            <span class="error-icon"></span><span class="error-txt">请选择证件类型</span>
+          </li>
+
+          <li :class="{'input-choice':focus==='idNumber'}">
+            <span class="form-icon id-number"></span><input class="form-input" v-model="formData.idNumber" placeholder="请填写证件号码" @focus="inputFocus('idNumber')" @blur="inputBlur('idNumber')" v-on:input="changeInput('idNumber')"/>
+          </li>
+          <li class="error" v-if="error.erridNumber">
+            <span class="error-icon"></span><span class="error-txt">请填写正确的证件号</span>
+          </li>
+
           <li :class="{'input-choice':focus==='tel'}">
-            <span class="tel"></span><input placeholder="请填写联系电话" @focus="focus='tel'" @blur="focus=''"/>
+            <span class="form-icon tel"></span><input class="form-input" v-model="formData.tel" type="number" placeholder="请填写联系电话" @focus="inputFocus('tel')" @blur="inputBlur('tel')" v-on:input="changeInput('tel')"/>
           </li>
+          <li class="error" v-if="error.errtel">
+            <span class="error-icon"></span><span class="error-txt">请填写正确的联系电话</span>
+          </li>
+
           <li>
-            <i :class="{'sex-choice':sex==='male'}" @click="sexChoice('male')">男</i><i :class="{'sex-choice':sex==='female'}" @click="sexChoice('female')">女</i>
+            <i :class="{'sex-choice':formData.sex==='male'}">男</i><i :class="{'sex-choice':formData.sex==='female'}">女</i>
           </li>
         </ul>
-        <div class="attention">
-          <h4 class="attention-title">注意事项：</h4>
-          <p class="attention-txt">请留意支付后将<span>不设取消、改期或退款</span>。在首次注射当天，病人<span>须带同香港居民身份证/往来港澳通行证、中国居民身份证和微信支付凭证(不接受屏幕截图)完成登记</span>，请预留足够时间应诊和接受注射，您可于当天一并预约第二针注射日期。</p>
-          <p class="attention-txt">如你未能提供以上资料，我们有权拒绝提供服务，而不会安排退款。</p>
+      </div>
+    </div>
+    <div class="attention">
+      <h4 class="attention-title">注意事项：</h4>
+      <p class="attention-txt">请留意支付后将<span>不设取消、改期或退款</span>。在首次注射当天，病人<span>须带同香港居民身份证/往来港澳通行证、中国居民身份证和微信支付凭证(不接受屏幕截图)完成登记</span>，请预留足够时间应诊和接受注射，您可于当天一并预约第二针注射日期。</p>
+      <p class="attention-txt">如你未能提供以上资料，我们有权拒绝提供服务，而不会安排退款。</p>
+    </div>
+    <div class="base-info-btn">
+      <span class="info-next-btn" :class="{'next-active':showNext}" v-tap @tap="nextProcess">下一步</span>
+    </div>
+
+    <!--证件选择下弹出-->
+    <mt-popup position="bottom" class="type-style-modal" v-model="showPopup">
+      <mt-picker :slots="idTypeData" @change="changeIdType" :showToolbar="true" :itemHeight="70">
+        <span @click="showPopup=false" class="popup-ok">确定</span>
+      </mt-picker>
+    </mt-popup>
+
+
+    <!--下一步验证失败弹窗-->
+    <div class="error-modal" v-show="errorMoadal">
+      <div class="modal-content">
+        <div class="modal-top">
+          <h4 class="modal-title">您填写的信息有误</h4>
+          <p class="modal-txt">请认真核对后重新填写</p>
+          <p class="modal-txt">如系统无法识别请与瑞华保险客服联系</p>
+          <p class="modal-tel">联系电话:<a class="tel-num" :href="'tel:400-133-3113'">400-133-3113</a></p>
         </div>
-        <div class="base-info-btn">下一步</div>
+        <div class="modal-btn" @click="hideErrorMoadal">好的</div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+  import {Popup,Picker} from 'mint-ui'
   export default {
     name: "baseInfo",
     data(){
       return {
-        showTips: false,
-        sex: 'male',
-        focus: ''
+        showTips: true,
+        formData: {
+          name: '',
+          idCode: '',
+          idType: '',
+          idNumber: '',
+          tel: '',
+          sex: ''
+        },
+        error: {
+          errname: false,
+          erridCode: false,
+          erridType: false,
+          erridNumber: false,
+          errtel: false,
+          errsex: false
+        },
+        focus: '',      //当前聚焦的input
+        showNext: false,   //下一步按钮高亮
+        showPopup: false,     //证件选择弹窗
+        idTypeData: [
+          {
+            flex: 1,
+            values: ['请选择','港澳通行证','护照'],
+            textAlign: 'center',
+            className: 'id-type-list'
+          }
+        ],
+        errorMoadal: false
+      }
+    },
+    watch: {
+      formData: {
+        handler(newValue,oldValue){
+          if(newValue.name && newValue.idCode && newValue.idType && newValue.idNumber && newValue.tel && newValue.sex){
+            this.showNext = true
+          } else {
+            this.showNext = false
+          }
+        },
+        deep: true
       }
     },
     methods:{
@@ -75,11 +159,102 @@
         this.showTips = false;
       },
       /**
-       * 选择性别
-       * @param sex：'male'男，'female'女
+       *  input获得焦点
+       * @param type:当前聚焦的对象 name：姓名 idCode：身份证号码  idType:证件类型  idNumber：证件号码  tel：电话
        */
-      sexChoice(sex){
-        this.sex = sex
+      inputFocus(type){
+        const _this = this;
+        _this.focus = type;
+      },
+      /**
+       * input失去焦点
+       * @param type:当前失去焦点的对象，同上
+       */
+      inputBlur(type){
+        const _this = this;
+        _this.focus = '';
+        if(!_this.formData[type]){
+          _this.error['err' + type] = true;
+        }
+        if (type === 'idCode'){   //身份证号码校验
+          const idCode = _this.formData.idCode;
+          let reg = /^(\d{6})(\d{4})((0[1-9])|(1[0-2]))((0[1-9])|(1[0-9])|(2[0-9])|(3[0-1]))(\d{3})([0-9]|X|x)$/;
+          if (!reg.test(idCode)) {
+            _this.error['err' + type] = true;
+            _this.formData.sex = ''
+          }
+        }
+      },
+      /**
+       * input输入事件
+       * @param type：同上
+       */
+      changeInput(type){
+        const _this = this;
+        _this.error['err' + type] = false;
+        if (type === 'idCode') {
+          const idCode = _this.formData.idCode;
+          if (idCode.length>= 17){
+            if ( parseInt(idCode[16])%2===0 ) {   //偶数为女
+              _this.formData.sex = 'female'
+            } else {
+              _this.formData.sex = 'male'
+            }
+          }
+          else if (idCode.length>18){
+            _this.error['err' + type] = true;
+          }
+        }
+      },
+      /**
+       * 点击证件选择事件
+       */
+      idTypeChoice(){
+        this.showPopup = true;
+      },
+      /**
+       * 证件选择事件
+       * @param picker  选择器picker的方法
+       * @param values  当前选择的内容
+       */
+      changeIdType(picker,values){
+        const _this = this;
+        if(values[0]==='请选择'){
+          _this.formData.idType = ''
+        } else {
+          _this.formData.idType = values[0];
+        }
+      },
+      /**
+       * 下一步事件
+       */
+      nextProcess(){
+        if (!this.showNext){
+          document.documentElement.style.overflow = "hidden";
+          this.errorMoadal = true;
+          return false
+        }
+        let currentUrl = window.location.href;
+
+        function GetQueryString(name){
+          var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+          var r = window.location.search.substr(1).match(reg);
+          if(r!=null){
+            return  unescape(r[2])
+          } else {
+            return ""
+          }
+        }
+        let CUserId = GetQueryString('CUserId'),    //截取的客户号
+          CPkgNo = GetQueryString('CPkgNo');        //截取的保单号
+
+        this.$router.push({
+          name: 'timeChoice'
+        })
+      },
+      hideErrorMoadal(){
+        this.errorMoadal = false;
+        document.documentElement.style.overflow = "scroll";
       }
     }
   }
@@ -89,11 +264,14 @@
   .base-info{
     padding-top: 20px;
     background:rgba(249,249,249,1);
+    height: 100vh;
     .tips{
       width: 100%;
-      min-height: 1334px;
+      min-height: 100vh;
       background: rgba(51,51,51,0.2);
-      position: relative;
+      position: fixed;
+      top: 0;
+      left: 0;
       z-index: 9;
       padding: 0 30px;
       .tips-content{
@@ -132,22 +310,35 @@
       .tips-txt{
         margin-top: 18px;
         font-family: PingFangSC-Regular;
-        //font-weight:400;
         font-size: 24px;
         color: #999;
         line-height: 44px;
       }
       .txt-top{
-
+        margin-bottom: 48px;
       }
       .txt-second-title{
         color: #4A4A4A;
         font-size: 26px;
+        line-height: 44px ;
         font-weight: 500;
+        font-family: PingFangSC-Medium;
       }
       .txt-list{
         &>li{
-
+          text-indent: 22px;
+          position: relative;
+          &:before{
+            content: '';
+            display: block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: rgba(6,151,156,1);
+            position: absolute;
+            left: 4px;
+            top: 16px;
+          }
         }
       }
       .tips-btn{
@@ -176,16 +367,16 @@
           width: 100%;
           height: 100px;
           line-height: 100px;
+          display: flex;
           border: 1px solid transparent;
-          >span{
-            display: inline-block;
+          .form-icon{
             width: 70px;
           }
-          >input{
+          .form-input{
             width: calc(100% - 72px);
             padding-right: 30px;
-            height: 96px;
-            line-height: 96px;
+            height: 95px;
+            line-height: 98px;
             margin-top: 1px;
             border: 1px solid transparent;
             outline: 1px solid transparent;
@@ -196,10 +387,54 @@
               color:rgba(170,170,170,1);
             }
           }
+          .id-type-input{
+            height: 100px;
+            line-height: 100px;
+            position: relative;
 
+            >i{
+              font-style: normal;
+            }
+            .placeholder{
+              color:rgba(170,170,170,1);
+            }
+            .id-type-icon{
+              position: absolute;
+              display: block;
+              width: 18px;
+              height: 100px;
+              right: 3px;
+              top: 0;
+              background: url("../../../assets/down/icon@2x.png") center center no-repeat;
+              background-size: 18px 17px;
+            }
+          }
           &:last-child{
             padding: 25px 0;
             line-height: 50px;
+          }
+          &.error{
+            height: 60px;
+            padding: 14px 42px 13px;
+            margin-left: -30px;
+            line-height: 33px;
+            background: rgba(249,249,249,1);
+            width: calc(100% + 60px);
+
+            .error-icon{
+              display: inline-block;
+              width: 30px;
+              height: 28px;
+              background: url("../../../assets/warn/icon@2x.png");
+              background-size: 30px 28px;
+            }
+            .error-txt{
+              font-size:24px;
+              font-family:PingFangSC-Regular;
+              font-weight:400;
+              color:rgba(255,102,102,1);
+              //line-height: 33px;
+            }
           }
           >i{
             font-style: normal;
@@ -222,39 +457,50 @@
               color: #fff;
             }
           }
-
         }
         .input-choice{
           border: 1px solid #06979C;
          }
         .name{
-          background: url("../../../assets/name/icon.png") no-repeat;
+          background: url("../../../assets/name/icon@2x.png") center center no-repeat;
+          background-size: 30px 43px;
         }
         .id-code{
-          background: url("../../../assets/id-code/icon.png") no-repeat;
+          background: url("../../../assets/id-code/icon@2x.png") center center no-repeat;
+          background-size: 43px 30px;
         }
         .id-type{
-          background: url("../../../assets/id-type/icon.png") no-repeat;
+          background: url("../../../assets/id-type/icon@2x.png") center center no-repeat;
+          background-size: 40px 36px;
         }
         .id-number{
-          background: url("../../../assets/id-number/icon.png") no-repeat;
+          background: url("../../../assets/id-number/icon@2x.png") center center no-repeat;
+          background-size: 36px 27px;
         }
         .tel{
-          background: url("../../../assets/tel/icon.png") no-repeat;
+          background: url("../../../assets/tel/icon@2x.png") center center no-repeat;
+          background-size: 30px 41px;
         }
       }
     }
     .attention{
-      margin-top: 38px;
+      padding: 38px 30px 0;
+      max-height: 9999999px;
       .attention-title{
         font-size: 26px;
         line-height: 50px;
         color: #4A4A4A;
+        font-weight: 400;
+        font-family: PingFangSC-Medium;
+        width: 100%;
       }
       .attention-txt{
         color: #999;
         font-size: 24px;
         line-height: 50px;
+        font-weight: 400;
+        font-family: PingFangSC-Regular;
+        width: 100%;
         >span{
           color: #666;
         }
@@ -263,18 +509,95 @@
     .base-info-btn{
       margin: 60px 0;
       width: 100%;
-      height: 100px;
-      line-height: 100px;
-      background:rgba(221,221,221,1);
-      border-radius:50px;
-      text-align: center;
-      font-size:30px;
-      font-family:PingFangSC-Medium;
-      font-weight:500;
-      color:rgba(255,255,255,1);
+      .info-next-btn{
+        display: block;
+        width: 690px;
+        margin: 0 auto;
+        height: 100px;
+        background:rgba(221,221,221,1);
+        line-height: 100px;
+        border-radius:50px;
+        text-align: center;
+        font-size:30px;
+        font-family:PingFangSC-Medium;
+        font-weight:500;
+        color:rgba(255,255,255,1);
 
-      .next-active{
-        background: #06979C;
+        &.next-active{
+          background: #06979C;
+        }
+      }
+    }
+    .type-style-modal{
+      width: 100%;
+      text-align: right;
+      .picker-toolbar{
+        height: 88px;
+        line-height: 88px;
+        padding: 0 30px;
+      }
+      .popup-ok{
+        font-size:32px;
+        font-family:PingFangSC-Regular;
+        font-weight:400;
+        color:rgba(3,140,247,1);
+      }
+      .picker-item{
+        font-size: 42px;
+      }
+    }
+    .error-modal{
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 1334px;
+      z-index: 9;
+      background: rgba(51,51,51,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      .modal-content{
+        width: 540px;
+        background: #fff;
+        border-radius: 20px;
+      }
+      .modal-top{
+        padding-top: 40px;
+      }
+      .modal-title{
+        text-align: center;
+        margin-bottom: 17px;
+        font-size: 32px;
+        line-height: 48px;
+        height: 48px;
+        color: #fe3e3e;
+      }
+      .modal-txt{
+        font-size: 24px;
+        text-align: center;
+        color: #999;
+        line-height: 44px;
+      }
+      .modal-tel{
+        margin-top: 30px;
+        margin-bottom: 25px;
+        text-align: center;
+        font-size: 28px;
+        line-height: 44px;
+        color: #999;
+      }
+      .tel-num{
+        color: #038CF7;
+        margin-left: 15px;
+      }
+      .modal-btn{
+        height: 88px;
+        line-height: 88px;
+        font-size: 32px;
+        color: #038CF7;
+        text-align: center;
+        border-top: 1px solid #e5e5e5;
       }
     }
   }

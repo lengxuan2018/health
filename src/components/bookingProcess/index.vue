@@ -1,8 +1,9 @@
 <template>
   <div>
-    <base-info></base-info>
+    <router-view></router-view>
+    <!--<base-info></base-info>
     <time-choice></time-choice>
-    <view-booking></view-booking>
+    <view-booking></view-booking>-->
   </div>
 </template>
 
@@ -26,6 +27,6 @@
   }
 </script>
 
-<style scoped>
+<style lang="scss">
 
 </style>

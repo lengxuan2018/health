@@ -1,9 +1,12 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import HelloWorld from '@/components/HelloWorld'
+import enterHome from '../components/enterHome'
 import bookingsIndex from '../components/myBookings/bookingsIndex'
 import bookingsInfo from '../components/myBookings/bookingsChange'
-import bookingProcess from '../components/bookingProcess/index.vue'
+import bookingProcess from '../components/bookingProcess/index'
+import baseInfo from '../components/bookingProcess/children/baseInfo'
+import timeChoice from '../components/bookingProcess/children/timeChoice'
+import viewBooking from '../components/bookingProcess/children/viewBooking'
 
 Vue.use(Router)
 
@@ -11,8 +14,8 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'HelloWorld',
-      component: HelloWorld
+      name: 'enterHome',
+      component: enterHome
     },
     {
       path: '/bookings',
@@ -42,9 +45,36 @@ export default new Router({
       path: '/bookingProcess',
       name: 'bookingProcess',
       meta: {
-        title: '申请改签'
+        title: '预约服务'
       },
-      component: bookingProcess
+      component: bookingProcess,
+      redirect: '/baseInfo',
+      children: [
+        {
+          path: '/baseInfo',
+          name: 'baseInfo',
+          meta: {
+            title: '预约服务'
+          },
+          component: baseInfo
+        },
+        {
+          path: '/timeChoice',
+          name: 'timeChoice',
+          meta: {
+            title: '预约服务'
+          },
+          component: timeChoice
+        },
+        {
+          path: '/viewBooking',
+          name: 'viewBooking',
+          meta: {
+            title: '预约服务'
+          },
+          component: viewBooking
+        }
+      ]
     }
   ]
 })

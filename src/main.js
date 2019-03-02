@@ -7,7 +7,11 @@ import 'lib-flexible'
 import Mint from 'mint-ui'
 import 'mint-ui/lib/style.css'
 import tap from './directives/tap'  // 手势
+import 'muse-ui/lib/styles/base.less';      //muse-ui日历组件
+import { Picker } from 'muse-ui';
+import 'muse-ui/lib/styles/theme.less';
 
+Vue.use(Picker);
 Vue.directive('tap',tap);
 Vue.use(Mint);
 Vue.config.productionTip = false;
