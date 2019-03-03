@@ -12,37 +12,13 @@ Vue.use(Router)
 
 export default new Router({
   routes: [
-    {
+    /*{
       path: '/',
       name: 'enterHome',
       component: enterHome
-    },
+    },*/
     {
-      path: '/bookings',
-      name: 'bookings',
-      meta: {
-        title: '我的预约'
-      },
-      component: bookingsIndex
-    },
-    {
-      path: '/bookingsRefund',
-      name: 'bookingsRefund',
-      meta: {
-        title: '退款服务'
-      },
-      component: bookingsInfo
-    },
-    {
-      path: '/bookingsEndorse',
-      name: 'bookingsEndorse',
-      meta: {
-        title: '申请改签'
-      },
-      component: bookingsInfo
-    },
-    {
-      path: '/bookingProcess',
+      path: '/',
       name: 'bookingProcess',
       meta: {
         title: '预约服务'
@@ -75,6 +51,30 @@ export default new Router({
           component: viewBooking
         }
       ]
+    },
+    {
+      path: '/bookings',
+      name: 'bookings',
+      meta: {
+        title: '我的预约'
+      },
+      component: bookingsIndex
+    },
+    {
+      path: '/bookingsRefund',
+      name: 'bookingsRefund',
+      meta: {
+        title: '退款服务'
+      },
+      component: bookingsInfo
+    },
+    {
+      path: '/bookingsEndorse',
+      name: 'bookingsEndorse',
+      meta: {
+        title: '申请改签'
+      },
+      component: bookingsInfo
     }
   ]
 })

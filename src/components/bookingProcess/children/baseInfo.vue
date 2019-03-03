@@ -184,6 +184,13 @@
             _this.formData.sex = ''
           }
         }
+        else if (type === 'tel') {
+          const telValue = _this.formData.tel;
+          let reg = /^1\d{10}$/;
+          if (!reg.test(telValue)) {
+            _this.error['err' + type] = true;
+          }
+        }
       },
       /**
        * input输入事件
@@ -203,6 +210,15 @@
           }
           else if (idCode.length>18){
             _this.error['err' + type] = true;
+          }
+        }
+        else if (type === 'tel') {
+          const telValue = _this.formData.tel;
+          if (telValue.length>0) {
+            let reg = /^1\d{0,10}$/;
+            if (!reg.test(telValue)) {
+              _this.error['err' + type] = true;
+            }
           }
         }
       },
@@ -337,7 +353,7 @@
             background-color: rgba(6,151,156,1);
             position: absolute;
             left: 4px;
-            top: 16px;
+            top: 18px;
           }
         }
       }
