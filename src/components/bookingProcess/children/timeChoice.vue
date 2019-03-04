@@ -1,33 +1,46 @@
 <template>
   <div class="time-choice">
-    <!--日历表-->
+    <!--日历表-->-{{orderNo}}-
     <div class="time-choice-main">
       <div class="header" v-tap @tap="showSections">
         <div class="logo">香港漫溢</div>
         <div class="location">{{localAdd}}</div>
       </div>
       <div class="choice-content">
-        <p class="choice-instruction">请您于月历上选取首次注射日期（仅提供最近30天内的服务预约），其他可约日期將定時更新。本中心会为您在完成支付后保留三支疫苗存货，支付后将不设取消、改期或退款。 如有任何查询，请致电港島西HPV热线 (852) 2149 9244或电邮:fmciw@hksh-healthcare.com 。</p>
+        <p class="choice-instruction">请您于月历上选取首次注射日期（仅提供最近30天内的服务预约），其他可约日期將定時更新。本中心会为您在完成支付后保留三支疫苗存货，支付后将不设取消、改期或退款。 如有任何查询，请致电港島西HPV热线4008588380或电邮:fmciw@hksh-healthcare.com 。</p>
         <div class="calendar">
           <h3 class="calendar-title">预约时间</h3>
           <!--日历表-->
           <div class="calendar-content">
-            <!--<mu-date-picker :date.sync="dateData" :color="'#06979c'"></mu-date-picker>-->
             <div class="header-month">
-              <span class="per-month"></span>
-              <span class="month-txt">{{today.month | toChinese}}</span>
-              <span class="next-month"></span>
+              <span class="per-month" :class="{'un-show':swipeIndex===0}" @click="perMonth"></span>
+              <span class="month-txt">{{showMonth | toChinese}}</span>
+              <span class="next-month" :class="{'un-show':swipeIndex===2}" @click="nextMonth"></span>
             </div>
             <div class="calendar-list">
               <div class="weeks">
                 <span>周日</span><span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span>
               </div>
-              <div class="days">
-                <div class="day-item" :class="{'unselect':item.state}" v-tap @tap="clickCalendar(item,index)" v-for="(item,index) in daysList">
-                  <span class="day-num">{{item.num}}</span>
-                  <span class="day-txt" v-if="item.state">已满</span>
-                </div>
-              </div>
+              <mt-swipe ref="calendar" class="days" :auto="0" :continuous="false" :defaultIndex="swipeIndex" @change="calendarMonthChange" :showIndicators="false">
+                <mt-swipe-item class="day-lists clearfix">
+                  <div class="day-item" :class="{'unselect':item.state}" v-tap @tap="clickCalendar(item,index)" v-for="(item,index) in perDayList">
+                    <span class="day-num">{{item.num}}</span>
+                    <span class="day-txt" v-if="item.state">已满</span>
+                  </div>
+                </mt-swipe-item>
+                <mt-swipe-item class="day-lists clearfix">
+                  <div class="day-item" :class="{'unselect':item.state}" v-tap @tap="clickCalendar(item,index)" v-for="(item,index) in daysList">
+                    <span class="day-num">{{item.num}}</span>
+                    <span class="day-txt" v-if="item.state">已满</span>
+                  </div>
+                </mt-swipe-item>
+                <mt-swipe-item class="day-lists clearfix">
+                  <div class="day-item" :class="{'unselect':item.state}" v-tap @tap="clickCalendar(item,index)" v-for="(item,index) in nextDayList">
+                    <span class="day-num">{{item.num}}</span>
+                    <span class="day-txt" v-if="item.state">已满</span>
+                  </div>
+                </mt-swipe-item>
+              </mt-swipe>
             </div>
           </div>
         </div>
@@ -76,13 +89,14 @@
 </template>
 
 <script>
-  import {Toast,Popup,Picker} from 'mint-ui'
+  import {Toast,Popup,Picker,Swipe} from 'mint-ui'
   export default {
     name: "timeChoice",
     data(){
       return {
+        orderNo: this.$route.params.orderNo || this.$route.query.orderNo || '',   //订单号
         localAdd: '香港·港岛西',             //当前定位
-        sectionModal: true,              //选择门诊弹窗
+        sectionModal: false,              //选择门诊弹窗
         sectionData: [                    //门诊部列表
           {
             name: '综合门诊中心'
@@ -106,9 +120,13 @@
         daysList: [
           /*{num: null,state: false},{num: null,state: false},{num: null,state: false},{num: null,state: false},{num: null,state: false},{num: 1,state: false},{num: 2,state: true},{num: 3,state: false},{num: 4,state: false},{num: 5,state: false},{num: 6,state: true},{num: 7,state: false},{num: 8,state: true},{num: 9,state: false},{num: 10,state: true},{num: 11,state: false},{num: 12,state: false},{num: 13,state: true},{num: 14,state: false},{num: 15,state: false},{num: 16,state: false},{num: 17,state: true},{num: 18,state: false},{num: 19,state: true},{num: 20,state: false},{num: 21,state: true},{num: 22,state: false},{num: 23,state: false},{num: 24,state: true},{num: 25,state: false},{num: 26,state: false},{num: 27,state: false},{num: 28,state: true},{num: 29,state: false},{num: 30,state: true},{num: 31,state: false}*/
         ],        //日历表数据
+        perDayList: [],         //上月日历
+        nextDayList: [],        //下月日历
         yearList: [],
         perYearList: [],
         nextYearList: [],
+        swipeIndex : 1,
+        showMonth: null,
         timeModal: false,        //时段选择弹窗显示
         amChoice: true,
         pmChoice: false,
@@ -121,6 +139,7 @@
         let year = date.getFullYear(),
           month = date.getMonth() + 1,
           today = date.getDate();
+        this.showMonth = month;
         return {year:year,month:month,today:today}
       },
       'amTxt'(){
@@ -139,6 +158,38 @@
           return '已满'
         }
       }
+      /*'showMonth'(){
+        switch (this.swipeIndex) {
+          case 0 :
+            return this.today.month - 1;
+            break;
+          case 1 :
+            return this.today.month;
+            break;
+          case 2 :
+            return this.today.month + 1;
+            break;
+          default :
+            return this.today.month;
+        }
+      }*/
+    },
+    watch: {
+      'swipeIndex'(newValue,oldValue){
+        switch (newValue) {
+          case 0 :
+            this.showMonth = this.today.month - 1;
+            break;
+          case 1 :
+            this.showMonth = this.today.month;
+            break;
+          case 2 :
+            this.showMonth = this.today.month + 1;
+            break;
+          default :
+            this.showMonth = this.today.month;
+        }
+      }
     },
     filters: {
       toChinese(value){
@@ -153,27 +204,39 @@
     created(){
       this.init();
     },
+    beforeMount(){
+
+    },
     methods:{
       /**
        * 页面加载方法
        */
       init(){
         const _this = this;
+        //获取当月、上月、下月数据
         const year = _this.today.year,
           month = _this.today.month;
         switch (month) {
           case 1:
             _this.yaerList = _this.getDate(year);
             _this.perYearList =_this.getDate(year-1);
+            _this.perDayList = _this.perYearList[11];
+            _this.daysList = _this.yearList[month-1];
+            _this.nextDayList = _this.yaerList[month];
             break;
           case 12:
             _this.yearList = _this.getDate(year);
             _this.nextYearList = _this.getDate(year+1);
+            _this.perDayList = _this.yaerList[month];
+            _this.daysList = _this.yearList[month-1];
+            _this.nextDayList = _this.nextYearList[0];
             break;
           default:
             _this.yearList = _this.getDate(year);
+            _this.perDayList = _this.yearList[month-2];
+            _this.daysList = _this.yearList[month-1];
+            _this.nextDayList = _this.yearList[month];
         }
-        _this.daysList = _this.yearList[month-1]
       },
       /**
        * 点击logo部分弹出门诊地址窗口
@@ -308,6 +371,22 @@
         if(item.state || !item.num) return;
         this.timeModal = true;
         document.documentElement.style.overflow = "hidden";
+      },
+      perMonth(){
+        if (this.swipeIndex===0){
+          return
+        }
+        this.$refs['calendar'].prev()
+      },
+      nextMonth(){
+        if (this.swipeIndex===2){
+          return
+        }
+        this.$refs['calendar'].next()
+      },
+      calendarMonthChange(){
+        //debugger
+        this.swipeIndex = this.$refs['calendar'].index
       },
       /**
        * 关闭时间选择弹窗
@@ -490,8 +569,13 @@
           display: block;
           position: absolute;
           top: 0;
+          z-index: 19;
           width: 17px;
           height: 100%;
+
+          &.un-show{
+            z-index: -2;
+          }
         }
         .per-month{
           left: 0;
@@ -511,6 +595,16 @@
         }
       }
       .calendar-list{
+        width: 100%;
+        height: 530px;
+        .mint-swipe-items-wrap{
+          width: 100%;
+
+          /*> div.is-active{
+            display: flex;
+            flex-wrap: wrap;
+          }*/
+        }
         .weeks{
           padding: 0 3px;
           display: flex;
@@ -525,13 +619,19 @@
             color:rgba(74,74,74,1);
           }
         }
+
         .days{
           display: flex;
           flex-wrap: wrap;
           margin-top: 42px;
+          .day-lists{
+            /*display: flex;
+            flex-wrap: wrap;*/
+          }
           .day-item{
             width: 64px;
             height: 64px;
+            float: left;
             line-height: 64px;
             text-align: center;
             //background: #ccc;

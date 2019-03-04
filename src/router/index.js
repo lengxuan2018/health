@@ -7,6 +7,7 @@ import bookingProcess from '../components/bookingProcess/index'
 import baseInfo from '../components/bookingProcess/children/baseInfo'
 import timeChoice from '../components/bookingProcess/children/timeChoice'
 import viewBooking from '../components/bookingProcess/children/viewBooking'
+import success from '../components/bookingProcess/children/success'
 
 Vue.use(Router)
 
@@ -49,6 +50,14 @@ export default new Router({
             title: '预约服务'
           },
           component: viewBooking
+        },
+        {
+          path: '/success',
+          name: 'success',
+          meta: {
+            title: '提交成功'
+          },
+          component: success
         }
       ]
     },

@@ -65,18 +65,18 @@
           </li>
 
           <li>
-            <i :class="{'sex-choice':formData.sex==='male'}">男</i><i :class="{'sex-choice':formData.sex==='female'}">女</i>
+            <i :class="{'sex-choice':formData.sex==='1001'}">男</i><i :class="{'sex-choice':formData.sex==='1002'}">女</i>
           </li>
         </ul>
       </div>
     </div>
-    <div class="attention">
-      <h4 class="attention-title">注意事项：</h4>
+    <div v-html="returnP" class="attention">
+      <!--<h4 class="attention-title">注意事项：</h4>
       <p class="attention-txt">请留意支付后将<span>不设取消、改期或退款</span>。在首次注射当天，病人<span>须带同香港居民身份证/往来港澳通行证、中国居民身份证和微信支付凭证(不接受屏幕截图)完成登记</span>，请预留足够时间应诊和接受注射，您可于当天一并预约第二针注射日期。</p>
-      <p class="attention-txt">如你未能提供以上资料，我们有权拒绝提供服务，而不会安排退款。</p>
+      <p class="attention-txt">如你未能提供以上资料，我们有权拒绝提供服务，而不会安排退款。</p>-->
     </div>
     <div class="base-info-btn">
-      <span class="info-next-btn" :class="{'next-active':showNext}" v-tap @tap="nextProcess">下一步</span>
+      <span class="info-next-btn" :class="{'next-active':showNext}" @click="nextProcess">下一步</span>
     </div>
 
     <!--证件选择下弹出-->
@@ -94,16 +94,19 @@
           <h4 class="modal-title">您填写的信息有误</h4>
           <p class="modal-txt">请认真核对后重新填写</p>
           <p class="modal-txt">如系统无法识别请与瑞华保险客服联系</p>
-          <p class="modal-tel">联系电话:<a class="tel-num" :href="'tel:400-133-3113'">400-133-3113</a></p>
+          <p class="modal-tel">联系电话:<a class="tel-num" :href="'tel:400-609-6868'">400-609-6868</a></p>
         </div>
         <div class="modal-btn" @click="hideErrorMoadal">好的</div>
       </div>
     </div>
   </div>
+
 </template>
 
 <script>
-  import {Popup,Picker} from 'mint-ui'
+  //const axios = require('axios');
+
+  import {Toast,Popup,Picker} from 'mint-ui'
   export default {
     name: "baseInfo",
     data(){
@@ -115,15 +118,14 @@
           idType: '',
           idNumber: '',
           tel: '',
-          sex: ''
+          sex: ''         //男1001，   女：1002
         },
         error: {
           errname: false,
           erridCode: false,
           erridType: false,
           erridNumber: false,
-          errtel: false,
-          errsex: false
+          errtel: false
         },
         focus: '',      //当前聚焦的input
         showNext: false,   //下一步按钮高亮
@@ -136,13 +138,17 @@
             className: 'id-type-list'
           }
         ],
-        errorMoadal: false
+        errorMoadal: false,
+        returnP: '',        //温馨提示部分返回文字
+        //orderNo: ''         //校验通过生成的订单号
       }
     },
     watch: {
       formData: {
         handler(newValue,oldValue){
-          if(newValue.name && newValue.idCode && newValue.idType && newValue.idNumber && newValue.tel && newValue.sex){
+          const _this = this;
+          let error = _this.error;
+          if(newValue.name && newValue.idCode && newValue.idType && newValue.idNumber && newValue.tel && newValue.sex && !error.errname && !error.erridCode && !error.erridType && !error.erridNumber && !error.errtel){
             this.showNext = true
           } else {
             this.showNext = false
@@ -151,7 +157,58 @@
         deep: true
       }
     },
+    created(){
+      this.init();
+    },
     methods:{
+      /**
+       * 页面加载事件
+       */
+      init(){
+        const _this = this;
+        _this.axios.get(basePath + 'appointment/get-note')
+          .then(function (response) {
+            //debugger
+            let res = response.data;
+            if(res.code == 0) {
+              _this.returnP = res.data.content;
+            }
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+      },
+      /**
+       *
+       * @param type: name  idCode  idType   idNumber   tel  sex
+       */
+      validate(type){
+        const _this = this;
+        const valueTypes = ['name','idType','idNumber','sex'];
+        if(valueTypes.includes(type)) {
+          if(!_this.formData[type]) {
+            _this.error['err' + type] = true;
+            _this.showNext = false;
+          }
+        }
+        else if (type === 'idCode') {
+          const idCode = _this.formData.idCode;
+          let reg = /^(\d{6})(\d{4})((0[1-9])|(1[0-2]))((0[1-9])|(1[0-9])|(2[0-9])|(3[0-1]))(\d{3})([0-9]|X|x)$/;
+          if (!reg.test(idCode)) {
+            _this.error['err' + type] = true;
+            _this.showNext = false;
+            _this.formData.sex = ''
+          }
+        }
+        else if (type === 'tel') {
+          const tel = _this.formData.tel;
+          let reg = /^1\d{10}$/;
+          if(tel.length !== 11 || !reg.test(tel)) {
+            _this.error['err' + type] = true;
+            _this.showNext = false;
+          }
+        }
+      },
       /**
        * 关闭温馨提示
        */
@@ -173,7 +230,8 @@
       inputBlur(type){
         const _this = this;
         _this.focus = '';
-        if(!_this.formData[type]){
+        _this.validate(type);
+        /*if(!_this.formData[type]){
           _this.error['err' + type] = true;
         }
         if (type === 'idCode'){   //身份证号码校验
@@ -190,7 +248,7 @@
           if (!reg.test(telValue)) {
             _this.error['err' + type] = true;
           }
-        }
+        }*/
       },
       /**
        * input输入事件
@@ -201,11 +259,14 @@
         _this.error['err' + type] = false;
         if (type === 'idCode') {
           const idCode = _this.formData.idCode;
+          if (idCode.length<17) {
+            _this.formData.sex = ''
+          }
           if (idCode.length>= 17){
             if ( parseInt(idCode[16])%2===0 ) {   //偶数为女
-              _this.formData.sex = 'female'
+              _this.formData.sex = '1002'     //女
             } else {
-              _this.formData.sex = 'male'
+              _this.formData.sex = '1001'     //男
             }
           }
           else if (idCode.length>18){
@@ -245,13 +306,13 @@
        * 下一步事件
        */
       nextProcess(){
-        if (!this.showNext){
-          document.documentElement.style.overflow = "hidden";
-          this.errorMoadal = true;
+        const _this = this;
+        const error = _this.error;
+        if (!_this.showNext || error.errname || error.erridCode || error.erridType || error.erridNumber || error.errtel){
           return false
         }
-        let currentUrl = window.location.href;
-
+        //let currentUrl = window.location.href;
+//console.log('提交了');
         function GetQueryString(name){
           var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
           var r = window.location.search.substr(1).match(reg);
@@ -261,12 +322,69 @@
             return ""
           }
         }
-        let CUserId = GetQueryString('CUserId'),    //截取的客户号
-          CPkgNo = GetQueryString('CPkgNo');        //截取的保单号
+        let CUserId = GetQueryString('CUserId') || '',    //截取的客户号
+          CPkgNo = GetQueryString('CPkgNo') || '';        //截取的保单号
+        const formData = _this.formData;
+        let card_type = '';     //证件类型   港澳通行证-1001，护照-1002
+        if (formData.idType === '港澳通行证'){
+          card_type = '1001'
+        }
+        else if (formData.idType === '护照') {
+          card_type = '1002'
+        }
 
-        this.$router.push({
-          name: 'timeChoice'
-        })
+        let postData ={
+          name: formData.name,
+          identity_card: formData.idCode,
+          card_type: card_type,
+          card_no: formData.idNumber,
+          contact_number: formData.tel,
+          sex: formData.sex,
+          CUserId: CUserId,
+          CPkgNo: CPkgNo
+        }
+        _this.axios.post(basePath + 'appointment/check',postData)
+          .then(function (response) {
+            console.log(response);
+            let res = response.data;
+            if (res.code == 0) {    //校验成功
+              //_this.orderNo = res.data.order_no;
+              _this.$router.push({
+                path: 'timeChoice',
+                query: {
+                  orderNo : res.data.order_no
+                }
+              })
+            }
+            else if (res.code == 1001) {
+              console.log('验证失败,需要补充信息')
+              document.documentElement.style.overflow = "hidden";
+              _this.errorMoadal = true;
+            }
+            else if(res.code == -1){
+              console.log('验证失败,需要补充信息')
+              Toast({
+                message: res.msg,    //提示信息
+                position: 'center',   //位置
+                duration: 1500        //时间
+              });
+            }
+            else{
+              Toast({
+                message: res.msg,    //提示信息
+                position: 'center',   //位置
+                duration: 1500        //时间
+              });
+            }
+          })
+          .catch(function (error) {
+            console.log(error);
+            Toast({
+              message: '服务器忙，请重试',    //提示信息
+              position: 'center',   //位置
+              duration: 1500        //时间
+            });
+          });
       },
       hideErrorMoadal(){
         this.errorMoadal = false;
@@ -501,8 +619,9 @@
     }
     .attention{
       padding: 38px 30px 0;
-      max-height: 9999999px;
-      .attention-title{
+      //max-height: 9999999px;
+      color: #999;
+      /*.attention-title{
         font-size: 26px;
         line-height: 50px;
         color: #4A4A4A;
@@ -520,7 +639,7 @@
         >span{
           color: #666;
         }
-      }
+      }*/
     }
     .base-info-btn{
       margin: 60px 0;
