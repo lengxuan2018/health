@@ -12,24 +12,83 @@
           <p>联系电话：<a class="tel-num" :href="'tel:4008588380'">4008588380</a></p>
         </div>
       </div>
-      <div class="success-btn"  v-tap @tap="successOK">好的</div>
+      <!--<div class="success-btn"  v-tap @tap="successOK">好的</div>-->
     </div>
 </template>
 
 <script>
+  import {Toast} from 'mint-ui';
   export default {
     name: "success",
     data(){
       return {
-
+        sid: this.$route.params.sid || this.$route.query.sid || ''   //订单号
       }
     },
+    beforeMount(){
+      const _this = this;
+      let sid = _this.sid
+      $.ajax({
+        url: basePath + 'appointment/get-app-info',
+        data: {sid:sid},
+        type: 'POST',
+        dataType: 'json',
+        success : function (res) {
+          if(res.code==0){
+            if(res.data.status == 1004){     //订单已退款状态
+              _this.$router.push(
+                {
+                  path: 'refundSuccess',
+                  query: {
+                    time: res.data['app_full_time'],
+                    hospital: res.data['full_address']
+                  }
+                })
+            }
+            else if (res.data.status == 1000){     //订单审核中状态
+              return false
+            }
+            else {
+              _this.$router.push(
+                {
+                  path: 'bookings',
+                  query: {
+                    sid:sid
+                  }
+                }
+              )
+            }
+          }
+          else if(res.code==1002){    //认证失效，重新登录
+            _this.$router.push(
+              {path: 'telLogin'}
+            )
+          }
+          else {
+            Toast({
+              message: res.msg,    //提示信息
+              position: 'center',   //位置
+              duration: 1500        //时间
+            });
+          }
+        },
+        error: function (err) {
+          Toast({
+            message: '请求错误，请重试',    //提示信息
+            position: 'center',   //位置
+            duration: 1500        //时间
+          });
+        }
+      })
+    },
     methods: {
-      successOK () {
-        this.$router.push({
-          name: 'bookings'
+      /*successOK () {
+        const _this = this;
+        _this.$router.push({
+          path: 'bookings',
+          query: {sid:_this.sid}
         })
-      }
+      }*/
     }
   }
 </script>
@@ -75,7 +134,7 @@
         border-top: 1px dashed rgba(188,188,188,1);
         margin-bottom: 54px;
         position: relative;
-        &:before{
+        /*&:before{
           display: block;
           content: '';
           //width: 15px;
@@ -104,7 +163,7 @@
           top: -15px;
           background:rgba(249,249,249,1);
           //box-shadow: 0 12px 24px 0 rgba(0,0,0,0.05);
-        }
+        }*/
       }
       .success-msg{
         >p{

@@ -1,7 +1,8 @@
 <template>
   <div>
-    <router-link to="bookingProcess">订单预约</router-link><br/>
-    <router-link to="bookings">订单查询</router-link><br/>
+    <br/><br/><br/><br/>
+    <router-link to="baseInfo" style="font-size: 28px">订单预约</router-link><br/><br/><br/>
+    <router-link to="telLogin" style="font-size: 28px">手机查询</router-link><br/>
 
   </div>
 </template>

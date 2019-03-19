@@ -2,12 +2,33 @@
   <div class="view-booking">
     <h3 class="view-title">预留信息</h3>
     <ul class="person-info">
-      <li v-for="(item,index) in personData" class="info-item">
-        {{item.name}}:<span class="info-item-txt">{{item.txt}}</span>
+      <li class="info-item">
+        姓名:<span class="info-item-txt">{{showData.name}}</span>
+      </li>
+      <li class="info-item">
+        手机号码:<span class="info-item-txt">{{showData.tel}}</span>
+      </li>
+      <li class="info-item">
+        身份证号:<span class="info-item-txt">{{showData.idCode}}</span>
+      </li>
+      <li class="info-item">
+        证件类型:<span class="info-item-txt">{{showData.idType}}</span>
+      </li>
+      <li class="info-item">
+        证件号码:<span class="info-item-txt">{{showData.idNumber}}</span>
+      </li>
+      <li class="info-item">
+        性别:<span class="info-item-txt">{{showData.sex}}</span>
+      </li>
+      <li class="info-item">
+        医院:<span class="info-item-txt">{{showData.hospital}}</span>
+      </li>
+      <li class="info-item">
+        预约时间:<span class="info-item-txt">{{showData.time}}</span>
       </li>
     </ul>
-    <div class="view-attention">
-      <h4>注意事项</h4>
+    <div class="view-attention" v-html="showData.attention">
+      <!--<h4>注意事项</h4>
       <p>在首次注射当天，<b>须携带中国居民身份证和往来港澳通行证或护照完成登记</b>，请预留足够时间应诊和接受注射，您可于当天一并预约第二针注射日期。</p>
       <p>如你未能提供以上资料，我们有权拒绝提供服务，而不会安排退款。</p>
       <h4>温馨提示:</h4>
@@ -20,30 +41,164 @@
     <p>⑤月经期是可以接种疫苗的。</p>
     <p>⑥HPV疫菌注射之前,不需要常规检测是否有HPV感染。</p>
     <p>⑦比较常见的为局部注射部位的红肿痛反应也有报道，个别人注射后会出现全身酸痛、低热、胃肠道恶心等不良反应,但基本为一过性的</p>
-    <p>⑧接种疫苗时患感冒、发烧等疾患暂不接种。</p>
+    <p>⑧接种疫苗时患感冒、发烧等疾患暂不接种。</p>-->
     </div>
     <div class="confirm-btn" v-tap @tap="viewNext">完成</div>
   </div>
 </template>
 
 <script>
+  import {Toast} from 'mint-ui'
   export default {
     name: "viewBooking",
-    data(){
-      return {
-        personData: [
-          {name: '姓名',txt: '陈某某'},{name: '身份证号',txt: '4405**********1010'},{name: '证件类型',txt: '港澳通行证'},{name: '证件号码',txt: 'SZ-5203432'},{name: '性别',txt: '男'},{name: '医院',txt: '香港港岛西家庭医学及基层医疗中心'},{name: '预约时间',txt: '2019年2月2日上午10时至下午1时'}
-        ]        //列表展示数据
+    props: {
+      formData: {
+        type: Object,
+        default(){
+          return {
+
+          }
+        }
+      },
+      /*personData: {
+        type: Object,
+        default(){
+          return {}
+        }
+      },*/
+      orderNo: {
+        type: String,
+        default: ''
       }
     },
+    data(){
+      return {
+        //personData: {},
+        showData: {
+          name: '',
+          tel: '',
+          idCode: '',
+          idType: '',
+          idNumber: '',
+          sex: '',
+          hospital: '',
+          time: ''
+        },
+        personData: {}
+      }
+    },
+    beforeMount(){
+      //this.init()
+    },
     methods: {
+      init(){
+        const _this = this;
+        const formData = _this.formData,
+          personData = _this.personData;
+        let //idType = '',
+          sex = '',
+          time = '';
+        /*if(formData.idType == 1001){
+          idType = '港澳通行证'
+        }
+        else if(formData.idType == 1002){
+          idType = '护照'
+        }*/
+        if(formData.sex == 1001){
+          sex = '男'
+        }
+        else if(formData.sex == 1002){
+          sex = '女'
+        }
+        if(personData.time_interval == 1001){
+          time = '上午10时至下午1时'
+        }
+        else if(personData.time_interval == 1002){
+          time = '下午3时至下午6时'
+        }
+        _this.showData = {
+          name: formData.name,
+          tel: formData.tel.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2'),
+          idCode: formData.idCode.replace(/(\d{6})\d{8}(\d{4})/,'$1********$2'),
+          idType: formData.idType,
+          idNumber: formData.idNumber,
+          sex: sex,
+          hospital: personData.area_name + personData.clinic_name,
+          time: personData.app_date + time,
+          attention: formData.attention
+        }
+      },
       /**
        * 点击完成事件
        */
       viewNext(){
-        this.$router.push({
-          name: 'bookings'
+        const _this = this;
+        let postData = {
+          order_no: _this.orderNo,
+          full_address: _this.personData.area_name + _this.personData.clinic_name,
+          app_date: _this.personData.app_date,
+          time_interval: _this.personData.time_interval,
+          area_id: _this.personData.area_id,
+          clinic_id: _this.personData.clinic_id
+        };
+
+        $.ajax({
+          url:basePath + 'appointment/save',
+          data: postData,
+          type: 'POST',
+          dataType: 'json',
+          success : function (res) {
+            if(res.code == 0){
+              _this.$router.push({
+                path: 'success',
+                query: {
+                  sid:res.data.sid
+                }
+              })
+            }
+            else {
+              Toast({
+                message: res.msg,    //提示信息
+                position: 'center',   //位置
+                duration: 1500        //时间
+              });
+            }
+          },
+          error: function (err) {
+            Toast({
+              message: '请求错误，请重试',    //提示信息
+              position: 'center',   //位置
+              duration: 1500        //时间
+            });
+          }
         })
+
+        /*_this.axios.post(basePath + 'appointment/save',postData)
+          .then(function (response) {
+            let res = response.data;
+            if(res.code == 0){
+              _this.$router.push({
+                path: 'success',
+                query: {
+                  sid:res.data.sid
+                }
+              })
+            }
+            else {
+              Toast({
+                message: res.msg,    //提示信息
+                position: 'center',   //位置
+                duration: 1500        //时间
+              });
+            }
+          })
+          .catch(function (error) {
+            Toast({
+              message: '请求错误，请重试',    //提示信息
+              position: 'center',   //位置
+              duration: 1500        //时间
+            });
+          });*/
       }
     }
   }

@@ -44,7 +44,6 @@
 
           <li :class="{'input-choice':focus==='idType'}">
             <span class="form-icon id-type"></span><span class="form-input id-type-input" v-model="formData.idType" @touchend.stop.prevent="idTypeChoice"><i v-if="formData.idType">{{formData.idType}}</i><i v-else class="placeholder">选择证件类型</i><i class="id-type-icon"></i></span>
-            <!--<span class="form-icon id-type"></span><span class="form-input id-type-input" v-model="formData.idType" @focus="inputFocus('idType')" @blur="inputBlur('idType')" v-on:input="changeInput('idType')"><i v-if="formData.idType">{{formData.idType}}</i><i v-else class="placeholder">选择证件类型</i><i class="id-type-icon"></i></span>-->
           </li>
           <li class="error" v-if="error.erridType">
             <span class="error-icon"></span><span class="error-txt">请选择证件类型</span>
@@ -64,25 +63,25 @@
             <span class="error-icon"></span><span class="error-txt">请填写正确的联系电话</span>
           </li>
 
-          <li>
+          <li class="sex">
             <i :class="{'sex-choice':formData.sex==='1001'}">男</i><i :class="{'sex-choice':formData.sex==='1002'}">女</i>
           </li>
         </ul>
       </div>
     </div>
-    <div v-html="returnP" class="attention">
+    <div v-html="formData.attention" class="attention">
       <!--<h4 class="attention-title">注意事项：</h4>
       <p class="attention-txt">请留意支付后将<span>不设取消、改期或退款</span>。在首次注射当天，病人<span>须带同香港居民身份证/往来港澳通行证、中国居民身份证和微信支付凭证(不接受屏幕截图)完成登记</span>，请预留足够时间应诊和接受注射，您可于当天一并预约第二针注射日期。</p>
       <p class="attention-txt">如你未能提供以上资料，我们有权拒绝提供服务，而不会安排退款。</p>-->
     </div>
     <div class="base-info-btn">
-      <span class="info-next-btn" :class="{'next-active':showNext}" @click="nextProcess">下一步</span>
+      <span class="info-next-btn" :class="{'next-active':showNext}" v-tap @tap="nextProcess">下一步</span>
     </div>
 
     <!--证件选择下弹出-->
     <mt-popup position="bottom" class="type-style-modal" v-model="showPopup">
       <mt-picker :slots="idTypeData" @change="changeIdType" :showToolbar="true" :itemHeight="70">
-        <span @click="showPopup=false" class="popup-ok">确定</span>
+        <span v-tap @tap="showPopup=false" class="popup-ok">确定</span>
       </mt-picker>
     </mt-popup>
 
@@ -96,7 +95,7 @@
           <p class="modal-txt">如系统无法识别请与瑞华保险客服联系</p>
           <p class="modal-tel">联系电话:<a class="tel-num" :href="'tel:400-609-6868'">400-609-6868</a></p>
         </div>
-        <div class="modal-btn" @click="hideErrorMoadal">好的</div>
+        <div class="modal-btn" v-tap @tap="hideErrorMoadal">好的</div>
       </div>
     </div>
   </div>
@@ -166,17 +165,41 @@
        */
       init(){
         const _this = this;
-        _this.axios.get(basePath + 'appointment/get-note')
+        $.ajax({
+          url: basePath + 'appointment/get-note',
+          type: 'GET',
+          dataType: 'json',
+          success : function (res) {
+            if(res.code==0){
+              _this.formData.attention = res.data.content;
+            }
+            else {
+              Toast({
+                message: res.msg,    //提示信息
+                position: 'center',   //位置
+                duration: 1500        //时间
+              });
+            }
+          },
+          error: function (err) {
+            Toast({
+              message: '请求错误，请重试',    //提示信息
+              position: 'center',   //位置
+              duration: 1500        //时间
+            });
+          }
+        })
+        /*_this.axios.get(basePath + 'appointment/get-note')
           .then(function (response) {
-            //debugger
             let res = response.data;
             if(res.code == 0) {
-              _this.returnP = res.data.content;
+
+              _this.formData.attention = res.data.content;
             }
           })
           .catch(function (error) {
             console.log(error);
-          });
+          });*/
       },
       /**
        *
@@ -231,24 +254,6 @@
         const _this = this;
         _this.focus = '';
         _this.validate(type);
-        /*if(!_this.formData[type]){
-          _this.error['err' + type] = true;
-        }
-        if (type === 'idCode'){   //身份证号码校验
-          const idCode = _this.formData.idCode;
-          let reg = /^(\d{6})(\d{4})((0[1-9])|(1[0-2]))((0[1-9])|(1[0-9])|(2[0-9])|(3[0-1]))(\d{3})([0-9]|X|x)$/;
-          if (!reg.test(idCode)) {
-            _this.error['err' + type] = true;
-            _this.formData.sex = ''
-          }
-        }
-        else if (type === 'tel') {
-          const telValue = _this.formData.tel;
-          let reg = /^1\d{10}$/;
-          if (!reg.test(telValue)) {
-            _this.error['err' + type] = true;
-          }
-        }*/
       },
       /**
        * input输入事件
@@ -343,31 +348,25 @@
           CUserId: CUserId,
           CPkgNo: CPkgNo
         }
-        _this.axios.post(basePath + 'appointment/check',postData)
-          .then(function (response) {
-            console.log(response);
-            let res = response.data;
+
+        $.ajax({
+          url: basePath + 'appointment/check',
+          data: postData,
+          type: 'POST',
+          dataType: 'json',
+          success : function (res) {
             if (res.code == 0) {    //校验成功
-              //_this.orderNo = res.data.order_no;
               _this.$router.push({
                 path: 'timeChoice',
                 query: {
-                  orderNo : res.data.order_no
+                  orderNo : res.data.order_no,
+                  formData: JSON.stringify(_this.formData)
                 }
               })
             }
-            else if (res.code == 1001) {
-              console.log('验证失败,需要补充信息')
-              document.documentElement.style.overflow = "hidden";
+            else if(res.code == 1001){
               _this.errorMoadal = true;
-            }
-            else if(res.code == -1){
-              console.log('验证失败,需要补充信息')
-              Toast({
-                message: res.msg,    //提示信息
-                position: 'center',   //位置
-                duration: 1500        //时间
-              });
+              document.documentElement.style.overflow = "hidden";
             }
             else{
               Toast({
@@ -375,6 +374,39 @@
                 position: 'center',   //位置
                 duration: 1500        //时间
               });
+            }
+          },
+          error: function (err) {
+            Toast({
+              message: '请求错误，请重试',    //提示信息
+              position: 'center',   //位置
+              duration: 1500        //时间
+            });
+          }
+
+        })
+        /*_this.axios.post(basePath + 'appointment/check',postData)
+          .then(function (response) {
+            console.log(response);
+            let res = response.data;
+            if (res.code == 0) {    //校验成功
+              //_this.orderNo = res.data.order_no;
+
+              _this.$router.push({
+                path: 'timeChoice',
+                query: {
+                  orderNo : res.data.order_no,
+                  formData: _this.formData
+                }
+              })
+            }
+            else{
+              Toast({
+                message: res.msg,    //提示信息
+                position: 'center',   //位置
+                duration: 1500        //时间
+              });
+              document.documentElement.style.overflow = "hidden";
             }
           })
           .catch(function (error) {
@@ -384,7 +416,7 @@
               position: 'center',   //位置
               duration: 1500        //时间
             });
-          });
+          });*/
       },
       hideErrorMoadal(){
         this.errorMoadal = false;
@@ -502,15 +534,20 @@
           height: 100px;
           line-height: 100px;
           display: flex;
+          align-items: center;
+          justify-content: center;
           border: 1px solid transparent;
           .form-icon{
+            display: block;
             width: 70px;
+            height: 90px;
           }
           .form-input{
-            width: calc(100% - 72px);
+            width: calc(100% - 74px);
+            display: block;
             padding-right: 30px;
-            height: 95px;
-            line-height: 98px;
+            height: 90px;
+            line-height: 90px;
             margin-top: 1px;
             border: 1px solid transparent;
             outline: 1px solid transparent;
@@ -548,6 +585,8 @@
             line-height: 50px;
           }
           &.error{
+            //align-items: left;
+            justify-content: left;
             height: 60px;
             padding: 14px 42px 13px;
             margin-left: -30px;
@@ -569,6 +608,9 @@
               color:rgba(255,102,102,1);
               //line-height: 33px;
             }
+          }
+          &.sex{
+            justify-content: left;
           }
           >i{
             font-style: normal;
@@ -619,27 +661,7 @@
     }
     .attention{
       padding: 38px 30px 0;
-      //max-height: 9999999px;
       color: #999;
-      /*.attention-title{
-        font-size: 26px;
-        line-height: 50px;
-        color: #4A4A4A;
-        font-weight: 400;
-        font-family: PingFangSC-Medium;
-        width: 100%;
-      }
-      .attention-txt{
-        color: #999;
-        font-size: 24px;
-        line-height: 50px;
-        font-weight: 400;
-        font-family: PingFangSC-Regular;
-        width: 100%;
-        >span{
-          color: #666;
-        }
-      }*/
     }
     .base-info-btn{
       margin: 60px 0;

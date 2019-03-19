@@ -14,6 +14,8 @@ import axios from 'axios';
 import VueAxios from 'vue-axios';
 import './config/config.js'    //配置文件,后期更改接口域名
 import qs from 'qs'
+import $ from 'jquery'
+import store from './store/index'
 
 Vue.use(VueAxios,axios);
 Vue.use(Picker);
@@ -27,6 +29,7 @@ Vue.prototype.$qs = qs;
 new Vue({
   el: '#app',
   router,
+  store,    //使用vuex的store
   components: { App },
   template: '<App/>'
 });
@@ -51,4 +54,10 @@ axios.interceptors.request.use((config) => {
 },(error) =>{
   return Promise.reject(error);
 });
+/*axios.defaults.headers = {
+  "Content-Type": "application/x-www-form-urlencoded;charset=utf-8"
+};
+axios.defaults.paramsSerializer = (params) => {
+  return qs.Stringify(params,{arrayFormat: 'brackets'})
+}*/
 
